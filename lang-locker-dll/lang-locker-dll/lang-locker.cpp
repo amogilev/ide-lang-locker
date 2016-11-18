@@ -73,7 +73,7 @@ LANGLOCKERDLL_API HKL LockInputLanguage(HKL langHandle) {
 
 		Log("Input language locked to ", lockedLanguageHandle);
 
-		// activate the language again - in case for synchronization issues
+		// activate the language again to protect from the potential concurrency issues
 		SetInputLanguage(langHandle);
 
 	} else if (langHandle != 0 && langHandle != curLang) {

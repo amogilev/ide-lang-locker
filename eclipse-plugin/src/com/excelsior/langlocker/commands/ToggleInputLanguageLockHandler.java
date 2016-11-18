@@ -74,8 +74,8 @@ public class ToggleInputLanguageLockHandler implements IHandler {
 		prevLocked = ((Boolean) state.getValue()).booleanValue();
 		newLocked = toggle ? !prevLocked : prevLocked;
 		
-		// locked language stored in preferences; this is used only in 'restore' action, while
-		// toggling always locks a current system language
+		// locked language is stored in preferences. It is used only in 'restore' action, as while
+		// toggling we always locks to the current language
 		IEclipsePreferences preferences = getPreferences();
 		long langId = toggle ? 0 : preferences.getLong(PREFID_LANGUAGE, 0);
 		

@@ -54,7 +54,7 @@ LRESULT WINAPI HookGetMsgProc(int nCode, WPARAM wParam, LPARAM lParam)
 		}
 		break;
 
-	// list of messages which shall not be used for reverting langauges
+	// list of messages which shall not be used for reverting languages
 	case WM_DESTROY:
 		break;
 

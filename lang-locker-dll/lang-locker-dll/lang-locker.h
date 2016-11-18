@@ -35,7 +35,7 @@ void Init();
 void Cleanup();
 
 //
-// Debug logging used throught the lang-locker DLL code.
+// Debug logging used throughout the lang-locker DLL code.
 // In 'Debug' configuration, the logs are written into langlocker.log file
 // created in the current application working directory. In 'Release' - does 
 // nothing.
