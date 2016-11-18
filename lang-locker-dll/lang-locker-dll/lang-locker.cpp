@@ -76,6 +76,9 @@ LANGLOCKERDLL_API HKL LockInputLanguage(HKL langHandle) {
 		// activate the language again to protect from the potential concurrency issues
 		SetInputLanguage(langHandle);
 
+		// NOTE: if the windows is not active, SetInputLanguge() is actually ignored by Windows, with a fake "success" result.
+		// So, we cannot rely only on the code above, but also needs a way to catch WM_ACTIVATE and check the current language there
+
 	} else if (langHandle != 0 && langHandle != curLang) {
 		Log("Requested change of locked language to ", langHandle);
 

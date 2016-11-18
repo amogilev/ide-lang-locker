@@ -13,6 +13,7 @@ HKL lockedLanguageHandle = 0;
 bool revertLanguageRequired = false;
 
 HHOOK messagesHook = 0;
+HHOOK shellHook = 0;
 DWORD lockingSinkCookie;
 bool lockingSinkSet = false;
 
@@ -20,6 +21,8 @@ bool lockingSinkSet = false;
 // returns whether activation succeeded
 bool SetInputLanguage(HKL languageHandle) {
 	HKL result = ActivateKeyboardLayout(languageHandle, KLF_ACTIVATE | KLF_SUBSTITUTE_OK | KLF_SETFORPROCESS);
+	Log("SetInputLanguage() to ", languageHandle);
+
 	return result != 0;
 }
 
@@ -35,10 +38,27 @@ char* findMessageName(UINT code) {
 }
 #endif
 
+LRESULT WINAPI HookShellProc(int nCode, WPARAM wParam, LPARAM lParam)
+{
+	// this check is used to ensure the correct language at the first activation of the window (e.g. if Alt-Tab from another 
+	//  window with another language), for which Windows does not notify sink about the language change
+	if (nCode == HSHELL_WINDOWACTIVATED) {
+		if (!revertLanguageRequired && lockedLanguageHandle && GetKeyboardLayout(0) != lockedLanguageHandle) {
+			Log("HookShellProc(HSHELL_WINDOWACTIVATED): Detected a need to change the input language");
+			revertLanguageRequired = false;
+			SetInputLanguage(lockedLanguageHandle);
+		}
+	}
+	return CallNextHookEx(NULL, nCode, wParam, lParam);
+}
+
 
 LRESULT WINAPI HookGetMsgProc(int nCode, WPARAM wParam, LPARAM lParam)
 {
 	PMSG pmsg = (PMSG)lParam;
+
+	// uncomment for more debug information, but only in DEBUG mode!
+	// logfile << "HookGetMsgProc(): " << findMessageName(pmsg->message) << std::endl;
 
 	if (nCode < 0)  // do not process message 
 		return CallNextHookEx(NULL, nCode, wParam, lParam);
@@ -59,23 +79,23 @@ LRESULT WINAPI HookGetMsgProc(int nCode, WPARAM wParam, LPARAM lParam)
 		break;
 
 	case WM_INPUTLANGCHANGE:
-		// NOTE: In Windows 8, this message may be not sent to hooks. So, both "sink" and "hook"
+		// NOTE: In Windows 8, this message may be not sent to hooks in some cases. So, both "sink" and "hook"
 		//       detectors are required
 
 		// failed to block language change, check if need to be reverted in future
 		if (!revertLanguageRequired && lockedLanguageHandle && (HKL)pmsg->lParam != lockedLanguageHandle) {
 			revertLanguageRequired = true;
-			Log("HookGetMsgProc: Detected need to revert unbloked language switch");
+			Log("HookGetMsgProc(WM_INPUTLANGCHANGE): Detected a need to change the input language");
 		}
-		// cannot change language here, as system will change it again (resulting in infintie loop)
+		// NOTE: cannot change language here, as system will change it again (resulting in infintie loop)
 		break;
 
 	default:
-		// other messages seems fine for language change
+		// other messages seems fine for language changes
 		// if some message will be causing errors, they need to be added to list above
 		if (revertLanguageRequired) {
 			revertLanguageRequired = false;
-			Log("Attempt for revert unblocked input language switch in msg ", pmsg->message);
+			// logfile << "HookGetMsgProc(): " << "Attempt for change input language in msg " << findMessageName(pmsg->message) << std::endl;
 			SetInputLanguage(lockedLanguageHandle);
 		}
 	}
@@ -90,13 +110,25 @@ void SetWndMessageHookEnabled(bool enabled) {
 			messagesHook = SetWindowsHookEx(WH_GETMESSAGE, HookGetMsgProc, NULL, GetCurrentThreadId());
 			Log("Message hook set: ", messagesHook);
 		}
-	}
-	else if (messagesHook) {
-		UnhookWindowsHookEx(messagesHook);
-		messagesHook = NULL;
-		Log("Message hook unset");
-	}
 
+		if (!shellHook) {
+			shellHook = SetWindowsHookEx(WH_SHELL, HookShellProc, NULL, GetCurrentThreadId());
+			Log("Shell hook set: ", shellHook);
+		}
+
+	}
+	else {
+		if (messagesHook) {
+			UnhookWindowsHookEx(messagesHook);
+			messagesHook = NULL;
+			Log("Message hook unset");
+		}
+		if (shellHook) {
+			UnhookWindowsHookEx(shellHook);
+			shellHook = NULL;
+			Log("Shell hook unset");
+		}
+	}
 }
 
 /*
@@ -112,7 +144,7 @@ public:
 		/* [in] */ LANGID langid,
 		/* [out] */ __RPC__out BOOL *pfAccept)
 	{
-		// block language switch
+		// block language switch (does not work in Windows 8 or later)
 		*pfAccept = 0;
 		Log("LockingLangNotifySink: Input Language switch blocked");
 
@@ -121,13 +153,15 @@ public:
 
 	virtual HRESULT STDMETHODCALLTYPE OnLanguageChanged(void)
 	{
+		Log("LockingLangNotifySink: OnLanguageChanged()");
+
 		// Since Windows 8, the OnLanguageChange method is never invoked
 		// So, here we shall check the current language and later revert it if necessary
 		if (!revertLanguageRequired && lockedLanguageHandle) {
 			HKL curLang = GetKeyboardLayout(0);
 			if (lockedLanguageHandle != curLang) {
 				revertLanguageRequired = true;
-				Log("LockingLangNotifySink: Detected need to revert unbloked language switch, curLang=", curLang);
+				Log("LockingLangNotifySink: Detected a need to change the input language; curLang=", curLang);
 				// cannot change language here, as system will change it again (resulting in infintie loop)
 			}
 		}

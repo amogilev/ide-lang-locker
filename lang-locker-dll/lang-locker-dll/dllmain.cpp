@@ -16,7 +16,7 @@ void onAttach(bool isProc, HMODULE hModule) {
 		Log("PROCESS_ATTACH, threadId=", GetCurrentThreadId());
 	} else {
 		nAttachedThreads++;
-		Log("THREAD_ATTACH, threadId=", GetCurrentThreadId());
+//		Log("THREAD_ATTACH, threadId=", GetCurrentThreadId());
 	}
 
 }
@@ -26,7 +26,7 @@ void onDetach(bool isProc) {
 		nAttachedProcs--;
 		Log("PROCESS_DETACH, threadId=", GetCurrentThreadId());
 	} else {
-		Log("THREAD_DETACH, threadId=", GetCurrentThreadId());
+//		Log("THREAD_DETACH, threadId=", GetCurrentThreadId());
 		nAttachedThreads--;
 	}
 	if (nAttachedProcs <= 0 && nAttachedThreads <= 0) {
