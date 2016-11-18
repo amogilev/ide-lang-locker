@@ -1,4 +1,4 @@
-package com.excelsior.langlocker.commands;
+package com.gilecode.langlocker.commands;
 
 import org.eclipse.core.commands.Command;
 import org.eclipse.core.commands.ExecutionEvent;
@@ -12,14 +12,14 @@ import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.commands.ICommandService;
 import org.eclipse.ui.handlers.RegistryToggleState;
 
-import com.excelsior.langlocker.LockEngine;
+import com.gilecode.langlocker.LockEngine;
 
 /**
  * The handler which processes clicks on "Lock/unlock input language" button.
  */
 public class ToggleInputLanguageLockHandler implements IHandler {
 	
-	private static final String PREF_NODE = "com.excelsior.langlocker";
+	private static final String PREF_NODE = "com.gilecode.langlocker";
 	private static final String PREFID_LANGUAGE = "lockedLanguageId";
 	
 	/**
@@ -39,7 +39,7 @@ public class ToggleInputLanguageLockHandler implements IHandler {
 				.getWorkbench().getActiveWorkbenchWindow()
 				.getService(ICommandService.class);
 		Command command = commandService
-				.getCommand("com.excelsior.langlocker.commands.toggleLanguageLock");
+				.getCommand("com.gilecode.langlocker.commands.toggleLanguageLock");
 		if (command == null) {
 			return;
 		}

@@ -10,7 +10,7 @@
 
 //
 // The pair of exported functions below is intended for non-Java programs.
-// Java programs shall use JNI versions declared in com_excelsior_langlocker_LockEngine.h
+// Java programs shall use JNI versions declared in com_gilecode_langlocker_LockEngine.h
 //
 
 /*

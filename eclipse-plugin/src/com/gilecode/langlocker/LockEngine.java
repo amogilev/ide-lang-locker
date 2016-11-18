@@ -1,4 +1,4 @@
-package com.excelsior.langlocker;
+package com.gilecode.langlocker;
 
 /**
  * Accessor to system-dependent native implementations of lock/unlock actions. 

@@ -1,4 +1,4 @@
-package com.excelsior.langlocker;
+package com.gilecode.langlocker;
 
 import org.eclipse.ui.IStartup;
 
