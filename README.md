@@ -25,7 +25,10 @@ I. At first, lang-locker.dll needs to be built. Do the following actions:
 II. Build Eclipse plugin.
 - Download and install Eclipse with PDE if you don't have one;
 - Open eclipse-plugin project;
-- Build and export plugin.
+- Make sure that the DLLs built in (I) are copied to libs\win32\ and libs\x64\ folders;
+- Build the project (if auto-build is disabled);
+- Export the plugin (File/Export.../Plug-in Development/Deployable plug-ins and fragments, Next,
+Browse a target directory, Finish).
 
 
 ===============
