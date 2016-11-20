@@ -17,6 +17,9 @@ HHOOK shellHook = 0;
 DWORD lockingSinkCookie;
 bool lockingSinkSet = false;
 
+bool coInitialized = false;
+HRESULT coInitResult;
+
 // activates the specified language if it is avalable.
 // returns whether activation succeeded
 bool SetInputLanguage(HKL languageHandle) {
@@ -37,6 +40,31 @@ char* findMessageName(UINT code) {
 	return "Unknown";
 }
 #endif
+
+void Init() {
+#ifdef _DEBUG
+	logfile.open("lang-locker.log");
+#ifdef MYWIN64
+	Log("lang-locker.dll 64-bit initialized");
+#else
+	Log("lang-locker.dll 32-bit initialized");
+#endif
+#endif
+
+	HRESULT hr = CoInitializeEx(NULL, COINIT_MULTITHREADED);
+	Log("On ProcessAttach CoInitialized() with hr=", hr);
+}
+
+void Cleanup() {
+	UnlockInputLanguage();
+	if (coInitialized && coInitResult == S_OK) {
+		CoUninitialize();
+	}
+#ifdef _DEBUG
+	Log("lang-locker.dll detached, cleanup");
+	logfile.close();
+#endif
+}
 
 LRESULT WINAPI HookShellProc(int nCode, WPARAM wParam, LPARAM lParam)
 {
@@ -224,6 +252,21 @@ void SetLockingSinkEnabled(bool enabled) {
 	}
 
 	HRESULT hr;
+
+	if (!coInitialized) {
+		hr = CoInitializeEx(NULL, COINIT_MULTITHREADED);
+		if (SUCCEEDED(hr) || hr == RPC_E_CHANGED_MODE) {
+			Log("CoInitialized() succeeds with hr=", hr);
+
+			coInitialized = true;
+			coInitResult = hr;
+		}
+		else {
+			Log("Failed to CoInitializeEx(), hr=", hr);
+			return;
+		}
+	}
+
 	ITfInputProcessorProfiles *pProfiles;
 
 	//Create the object and obtain the pointer. 

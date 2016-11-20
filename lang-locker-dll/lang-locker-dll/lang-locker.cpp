@@ -30,26 +30,6 @@ void Log(const char* str, HANDLE param) {}
 void Log(const char* str, DWORD param) {}
 #endif
 
-void Init() {
-#ifdef _DEBUG
-	logfile.open("lang-locker.log");
-#ifdef MYWIN64
-	Log("lang-locker.dll 64-bit initialized");
-#else
-	Log("lang-locker.dll 32-bit initialized");
-#endif
-#endif
-}
-
-void Cleanup() {
-	UnlockInputLanguage();
-#ifdef _DEBUG
-	Log("lang-locker.dll detached, cleanup");
-	logfile.close();
-#endif
-}
-
-
 LANGLOCKERDLL_API HKL LockInputLanguage(HKL langHandle) {
 	HKL curLang = GetKeyboardLayout(0);
 	bool success = false;
