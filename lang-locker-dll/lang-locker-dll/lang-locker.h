@@ -50,6 +50,7 @@ extern std::ofstream logfile;
 #endif
 
 extern HKL lockedLanguageHandle;
+extern HMODULE module;
 
 // 
 // Implementation methods which enables or disables messages hook and advise sink 

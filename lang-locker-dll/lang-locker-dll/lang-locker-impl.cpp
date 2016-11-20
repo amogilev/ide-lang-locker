@@ -107,12 +107,15 @@ LRESULT WINAPI HookGetMsgProc(int nCode, WPARAM wParam, LPARAM lParam)
 void SetWndMessageHookEnabled(bool enabled) {
 	if (enabled) {
 		if (!messagesHook) {
-			messagesHook = SetWindowsHookEx(WH_GETMESSAGE, HookGetMsgProc, NULL, GetCurrentThreadId());
+			messagesHook = SetWindowsHookEx(WH_GETMESSAGE, HookGetMsgProc, module, NULL);
 			Log("Message hook set: ", messagesHook);
 		}
 
 		if (!shellHook) {
-			shellHook = SetWindowsHookEx(WH_SHELL, HookShellProc, NULL, GetCurrentThreadId());
+			shellHook = SetWindowsHookEx(WH_SHELL, HookShellProc, module, NULL);
+			if (shellHook == NULL) {
+				Log("Failed to set shell hook", GetLastError());
+			}
 			Log("Shell hook set: ", shellHook);
 		}
 

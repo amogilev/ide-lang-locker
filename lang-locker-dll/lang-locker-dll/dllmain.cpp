@@ -5,10 +5,12 @@
 
 int nAttachedProcs = 0, nAttachedThreads = 0;
 bool initialized = false;
+HMODULE module;
 
 void onAttach(bool isProc, HMODULE hModule) {
 	if (!initialized) {
 		initialized = true;
+		module = hModule;
 		Init();
 	}
 	if (isProc) {
