@@ -68,15 +68,28 @@ void Cleanup() {
 
 LRESULT WINAPI HookShellProc(int nCode, WPARAM wParam, LPARAM lParam)
 {
-	// this check is used to ensure the correct language at the first activation of the window (e.g. if Alt-Tab from another 
-	//  window with another language), for which Windows does not notify sink about the language change
-	if (nCode == HSHELL_WINDOWACTIVATED) {
+	// the shell hook works for two purposes:
+	// 1) if language sink does not work for some reasons (currently it is so for Intellij IDEA plugin), it
+	//     catches 'language change' events (HSHELL_LANGUAGE)
+	// 2) otherwise, it is used to ensure the correct language at the first activation of the window (e.g. if 
+	//     Alt-Tab from another window with another language), for which Windows does not notify sink about 
+	//     the language change
+	Log("HookShellProc():", nCode);
+	switch (nCode) {
+	case HSHELL_WINDOWACTIVATED:
+	case HSHELL_LANGUAGE:
 		if (!revertLanguageRequired && lockedLanguageHandle && GetKeyboardLayout(0) != lockedLanguageHandle) {
-			Log("HookShellProc(HSHELL_WINDOWACTIVATED): Detected a need to change the input language");
-			revertLanguageRequired = false;
-			SetInputLanguage(lockedLanguageHandle);
+			Log("HookShellProc: Detected a need to change the input language");
+			revertLanguageRequired = true;
 		}
 	}
+	if (revertLanguageRequired && lockedLanguageHandle && nCode == HSHELL_WINDOWACTIVATED) {
+		// seems safe to change the language at this event
+		revertLanguageRequired = false;
+		Log("HookShellProc: change the input language to ", lockedLanguageHandle);
+		SetInputLanguage(lockedLanguageHandle);
+	}
+
 	return CallNextHookEx(NULL, nCode, wParam, lParam);
 }
 
