@@ -56,7 +56,7 @@ extern HMODULE module;
 // Implementation methods which enables or disables messages hook and advise sink 
 // which provides control over input languages switches
 //
-void SetWndMessageHookEnabled(bool enabled);
+void SetWndHooksEnabled(bool enabled);
 void SetLockingSinkEnabled(bool enabled);
 
 // Internal function used to switch current input language

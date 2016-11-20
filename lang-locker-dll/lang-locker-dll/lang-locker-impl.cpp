@@ -145,7 +145,7 @@ LRESULT WINAPI HookGetMsgProc(int nCode, WPARAM wParam, LPARAM lParam)
 }
 
 
-void SetWndMessageHookEnabled(bool enabled) {
+void SetWndHooksEnabled(bool enabled) {
 	if (enabled) {
 		if (!messagesHook) {
 			messagesHook = SetWindowsHookEx(WH_GETMESSAGE, HookGetMsgProc, module, NULL);
