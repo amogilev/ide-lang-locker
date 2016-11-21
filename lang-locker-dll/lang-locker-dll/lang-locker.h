@@ -51,6 +51,7 @@ extern std::ofstream logfile;
 
 extern HKL lockedLanguageHandle;
 extern HMODULE module;
+extern DWORD mainThreadId;
 
 // 
 // Implementation methods which enables or disables messages hook and advise sink 

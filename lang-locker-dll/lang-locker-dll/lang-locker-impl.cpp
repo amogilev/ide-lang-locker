@@ -20,6 +20,10 @@ bool lockingSinkSet = false;
 bool coInitialized = false;
 HRESULT coInitResult;
 
+// it is preferred that all checks and sets of the language are performed on 'main' thread, which gets widnows messages
+// this ID is set at the first caught message; until that, value of '0' means 'current thread'
+DWORD mainThreadId = 0;
+
 // activates the specified language if it is avalable.
 // returns whether activation succeeded
 bool SetInputLanguage(HKL languageHandle) {
@@ -50,9 +54,6 @@ void Init() {
 	Log("lang-locker.dll 32-bit initialized");
 #endif
 #endif
-
-	HRESULT hr = CoInitializeEx(NULL, COINIT_MULTITHREADED);
-	Log("On ProcessAttach CoInitialized() with hr=", hr);
 }
 
 void Cleanup() {
@@ -74,11 +75,15 @@ LRESULT WINAPI HookShellProc(int nCode, WPARAM wParam, LPARAM lParam)
 	// 2) otherwise, it is used to ensure the correct language at the first activation of the window (e.g. if 
 	//     Alt-Tab from another window with another language), for which Windows does not notify sink about 
 	//     the language change
-	Log("HookShellProc():", nCode);
+	if (!mainThreadId) {
+		mainThreadId = GetCurrentThreadId();
+		Log("HookShellProc sets mainThread=", GetCurrentThreadId());
+	}
+	
 	switch (nCode) {
 	case HSHELL_WINDOWACTIVATED:
 	case HSHELL_LANGUAGE:
-		if (!revertLanguageRequired && lockedLanguageHandle && GetKeyboardLayout(0) != lockedLanguageHandle) {
+		if (!revertLanguageRequired && lockedLanguageHandle && GetKeyboardLayout(mainThreadId) != lockedLanguageHandle) {
 			Log("HookShellProc: Detected a need to change the input language");
 			revertLanguageRequired = true;
 		}
@@ -93,9 +98,13 @@ LRESULT WINAPI HookShellProc(int nCode, WPARAM wParam, LPARAM lParam)
 	return CallNextHookEx(NULL, nCode, wParam, lParam);
 }
 
-
 LRESULT WINAPI HookGetMsgProc(int nCode, WPARAM wParam, LPARAM lParam)
 {
+	if (!mainThreadId) {
+		mainThreadId = GetCurrentThreadId();
+		Log("HookGetMsgProc sets mainThread=", GetCurrentThreadId());
+	}
+	
 	PMSG pmsg = (PMSG)lParam;
 
 	// uncomment for more debug information, but only in DEBUG mode!
@@ -120,8 +129,8 @@ LRESULT WINAPI HookGetMsgProc(int nCode, WPARAM wParam, LPARAM lParam)
 		break;
 
 	case WM_INPUTLANGCHANGE:
-		// NOTE: In Windows 8, this message may be not sent to hooks in some cases. So, both "sink" and "hook"
-		//       detectors are required
+		// NOTE: In Windows 8, this message may be not sent to hooks in some cases. So, other detectors (like "sink" or "shell hook")
+		//       are required too
 
 		// failed to block language change, check if need to be reverted in future
 		if (!revertLanguageRequired && lockedLanguageHandle && (HKL)pmsg->lParam != lockedLanguageHandle) {

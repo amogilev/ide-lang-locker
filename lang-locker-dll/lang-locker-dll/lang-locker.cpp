@@ -31,7 +31,8 @@ void Log(const char* str, DWORD param) {}
 #endif
 
 LANGLOCKERDLL_API HKL LockInputLanguage(HKL langHandle) {
-	HKL curLang = GetKeyboardLayout(0);
+	HKL curLang = GetKeyboardLayout(mainThreadId);
+	Log("LockInputLanguage(), curLang=", curLang);
 	bool success = false;
 
 	if (!lockedLanguageHandle) {
