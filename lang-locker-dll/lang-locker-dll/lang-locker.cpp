@@ -50,7 +50,6 @@ LANGLOCKERDLL_API HKL LockInputLanguage(HKL langHandle) {
 
 		lockedLanguageHandle = langHandle;
 		SetWndHooksEnabled(true);
-		SetLockingSinkEnabled(true);
 
 		Log("Input language locked to ", lockedLanguageHandle);
 
@@ -84,7 +83,6 @@ LANGLOCKERDLL_API HKL LockInputLanguage(HKL langHandle) {
 LANGLOCKERDLL_API void UnlockInputLanguage() {
 	if (lockedLanguageHandle) {
 		SetWndHooksEnabled(false);
-		SetLockingSinkEnabled(false);
 		lockedLanguageHandle = NULL;
 		Log("Input language unlocked");
 	}

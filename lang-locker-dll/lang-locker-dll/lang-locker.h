@@ -54,12 +54,10 @@ extern HMODULE module;
 extern DWORD mainThreadId;
 
 // 
-// Implementation methods which enables or disables messages hook and advise sink 
-// which provides control over input languages switches
+// Implementation methods which enables or disables messages hooks 
+// which provide control over input languages switches
 //
 void SetWndHooksEnabled(bool enabled);
-void SetLockingSinkEnabled(bool enabled);
 
 // Internal function used to switch current input language
 bool SetInputLanguage(HKL languageHandle);
-
