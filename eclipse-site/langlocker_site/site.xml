@@ -1,7 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<site>
-   <description name="LangLocker update site" url="http://amogilev.github.io/ide-lang-locker">
-      Update site serving LangLocker plugin for Eclipse.
-   </description>
-   <feature url="features/com.gilecode.langlocker.feature_2.1.0.201611261907.jar" id="com.gilecode.langlocker.feature" version="2.1.0.201611261907" os="win32" arch="x86,x86_64"/>
-</site>
