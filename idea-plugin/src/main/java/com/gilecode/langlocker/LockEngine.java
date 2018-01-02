@@ -57,7 +57,7 @@ public class LockEngine {
             log.error("Could not find " + LOCKER_DLL);
         } else if (!new File(libUrl.getFile()).isFile()) {
             // probably, we are inside JAR. Copy DLL to a temporary file
-            // TODO: maybe re-use existing DLL files? Or delete at exit...
+            // NOTE: this case is not expected since 2.2, but kept supported
             try {
                 File tmpDll = FileUtil.createTempFile("tempLangLocker", ".dll");
                 try(InputStream is = LockEngine.class.getClassLoader().getResourceAsStream(libPath + LOCKER_DLL);

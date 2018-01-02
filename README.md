@@ -13,7 +13,7 @@ Build instructions
 I. At first, lang-locker.dll needs to be built. Do the following actions:
 - Download and install "Microsoft Visual Studio Express 2013 for Windows Desktop" if needed;
 - Download and install JDK if needed;
-- Set %JAVA_HOME% environment vraiable to point the JDK installation folder;
+- Set %JAVA_HOME% environment variable to point the JDK installation folder;
 - Run Visual Studio and load lang-locker-dll solution;
 - Select preferred configuration (Debug or Release) and optionally modify build options (e.g.
   you may prefer to use standalone Runtime DLLs to make lang-locker.dll smaller - this is fine
@@ -30,6 +30,13 @@ II. Build Eclipse plugin.
 - Export the plugin (File/Export.../Plug-in Development/Deployable plug-ins and fragments, Next,
 Browse a target directory, Finish).
 
+III. Build plugin for Intellij IDEs (e.g. IDEA).
+- Download and install Intellij IDEA, enable Gradle plugin;
+- On the 'Welcome' screen, click 'Import project' and select 'idea-plugin' folder, choose 'Gradle', check 'Use auto-import'
+- As the run configurations may be overwritten, restore them from VCS: from idea-plugin folder, run 'git checkout -- .idea/runConfigurations'
+- Make sure that the DLLs built in (I) are copied to src\main\resources\libs\{win32,x64} folders;
+- Build and test the plugin using 'buildPlugin' and 'runIdea' run configurations;
+- After a successful build, a plugin ZIP may be found in the "build\distributions" folder
 
 ===============
 How to use Eclipse plugin
