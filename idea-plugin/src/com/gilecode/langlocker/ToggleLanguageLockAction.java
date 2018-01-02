@@ -4,6 +4,9 @@ import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.ToggleAction;
+import com.intellij.openapi.application.ApplicationManager;
+
+import java.awt.*;
 
 /**
  * @author Andrey Mogilev
@@ -15,7 +18,12 @@ public class ToggleLanguageLockAction extends ToggleAction {
     private static boolean isLocked = false;
 
     public ToggleLanguageLockAction() {
-        toggleOrRestoreLanguageLock(false);
+        ApplicationManager.getApplication().invokeLater(new Runnable() {
+            @Override
+            public void run() {
+                toggleOrRestoreLanguageLock(false);
+            }
+        });
     }
 
     /**
@@ -26,7 +34,7 @@ public class ToggleLanguageLockAction extends ToggleAction {
      * @param toggle whether to change the current locked state to the opposite, or just restore it
      *               to the persisted value.
      */
-    private void toggleOrRestoreLanguageLock(boolean toggle) {
+    private void toggleOrRestoreLanguageLock(final boolean toggle) {
         // locked language is stored in preferences. It is used only in 'restore' action, as while
         // toggling we always locks to the current language
         PropertiesComponent props = PropertiesComponent.getInstance();

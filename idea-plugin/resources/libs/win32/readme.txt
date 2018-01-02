@@ -1,0 +1,1 @@
+Copy 32-bit version of lang-locker.dll here
