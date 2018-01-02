@@ -1,7 +1,7 @@
 <idea-plugin version="2">
   <id>com.gilecode.langlocker</id>
   <name>Input Language Locker</name>
-  <version>2.1</version>
+  <version>2.2</version>
   <vendor email="yagson@gilecode.com" url="http://gilecode.com">Andrey Mogilev</vendor>
 
   <description><![CDATA[
