@@ -43,7 +43,7 @@ void Cleanup();
 void Log(const char* str);
 void Log(const char* str, HANDLE param);
 void Log(const char* str, DWORD param);
-
+void Log(const wchar_t* str);
 
 #ifdef _DEBUG
 extern std::ofstream logfile;
@@ -61,3 +61,6 @@ void SetWndHooksEnabled(bool enabled);
 
 // Internal function used to switch current input language
 bool SetInputLanguage(HKL languageHandle);
+
+// Internal function used to detect the "main" thread, i.e. the thread with the window message loop
+void DetectMainThread();

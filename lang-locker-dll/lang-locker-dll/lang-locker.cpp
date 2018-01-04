@@ -15,6 +15,10 @@ void Log(const char* str) {
 	logfile << str << endl;
 }
 
+void Log(const wchar_t* str) {
+	logfile << str << endl;
+}
+
 void Log(const char* str, HANDLE param) {
 	logfile << str << "0x" << hex << uppercase << param << endl;
 }
@@ -26,11 +30,16 @@ void Log(const char* str, DWORD param) {
 
 #else 
 void Log(const char* str) {}
+void Log(const wchar_t* str) {}
 void Log(const char* str, HANDLE param) {}
 void Log(const char* str, DWORD param) {}
 #endif
 
 LANGLOCKERDLL_API HKL LockInputLanguage(HKL langHandle) {
+	if (!mainThreadId) {
+		DetectMainThread();
+	}
+
 	HKL curLang = GetKeyboardLayout(mainThreadId);
 	Log("LockInputLanguage(), curLang=", curLang);
 	bool success = false;

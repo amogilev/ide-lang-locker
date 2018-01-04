@@ -16,7 +16,17 @@ void onAttach(bool isProc, HMODULE hModule) {
 	if (isProc) {
 		nAttachedProcs++;
 		Log("PROCESS_ATTACH, threadId=", GetCurrentThreadId());
-	} else {
+
+		/*
+		// uncomment for logging module and process names
+		char modName[1000];
+		GetModuleFileNameA(NULL, modName, 1000);
+		Log(modName);
+		GetModuleFileNameA(hModule, modName, 1000);
+		Log(modName);
+		*/
+	}
+	else {
 		nAttachedThreads++;
 //		Log("THREAD_ATTACH, threadId=", GetCurrentThreadId());
 	}

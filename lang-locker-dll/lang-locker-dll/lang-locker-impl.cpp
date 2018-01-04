@@ -35,14 +35,18 @@ char* findMessageName(UINT code) {
 			return WindowsMessages[i].pname;
 		}
 	}
-
+	Log("Unknown Message: ", code);
 	return "Unknown";
 }
 #endif
 
 void Init() {
 #ifdef _DEBUG
+//	char buf[100];
+//	sprintf_s(buf, "C:/temp/lang-locker-%d.log", GetCurrentProcessId());
+//	logfile.open(buf);
 	logfile.open("lang-locker.log");
+
 #ifdef MYWIN64
 	Log("lang-locker.dll 64-bit initialized");
 #else
@@ -57,6 +61,79 @@ void Cleanup() {
 	Log("lang-locker.dll detached, cleanup");
 	logfile.close();
 #endif
+}
+
+BOOL CALLBACK EnumThreadWndProc(HWND hwnd, LPARAM lParam) {
+	*(BOOL*)lParam = TRUE;
+	return FALSE;
+}
+
+BOOL HasWindow(DWORD threadId) {
+	BOOL hasWnd = FALSE;
+	EnumThreadWindows(threadId, &EnumThreadWndProc, (LPARAM)&hasWnd);
+	return hasWnd;
+}
+
+DWORD FindSingleWindowThreadId()
+{
+	DWORD procId = GetCurrentProcessId();
+	DWORD foundThreadId = NULL;
+	HANDLE hThreadSnap = INVALID_HANDLE_VALUE;
+	THREADENTRY32 te32;
+	te32.dwSize = sizeof(THREADENTRY32);
+
+	hThreadSnap = CreateToolhelp32Snapshot(TH32CS_SNAPTHREAD, 0);
+	if (hThreadSnap == INVALID_HANDLE_VALUE)
+	{
+		Log("CreateToolhelp32Snapshot failed");
+		return NULL;
+	}
+
+	if (!Thread32First(hThreadSnap, &te32))
+	{
+		Log("Thread32First Failed");
+		CloseHandle(hThreadSnap);
+		return NULL;
+	}
+
+	// walk the thread list, for each thread of this process, check if it has any windows
+	do
+	{
+		if (te32.th32OwnerProcessID == procId)
+		{
+			if (HasWindow(te32.th32ThreadID)) {
+				Log("Thread with window(s): ", te32.th32ThreadID);
+				if (foundThreadId) {
+					Log("Multiple threads with windows found, give up...");
+					return NULL;
+				}
+				else {
+					foundThreadId = te32.th32ThreadID;
+				}
+			}
+		}
+	} while (Thread32Next(hThreadSnap, &te32));
+	CloseHandle(hThreadSnap);
+
+	return foundThreadId;
+}
+
+void DetectMainThread() {
+	DWORD currentThreadId = GetCurrentThreadId();
+	if (HasWindow(currentThreadId)) {
+		Log("DetectMainThread() detected the current thread as the main thread: ", currentThreadId);
+		mainThreadId = currentThreadId;
+	}
+	else {
+		DWORD tid = FindSingleWindowThreadId();
+		if (tid) {
+			Log("DetectMainThread() detected the main thread: ", tid);
+			mainThreadId = tid;
+		}
+		else {
+			Log("DetectMainThread() failed to detect the main thread!");
+		}
+	}
 }
 
 LRESULT WINAPI HookShellProc(int nCode, WPARAM wParam, LPARAM lParam)
@@ -145,20 +222,22 @@ LRESULT WINAPI HookGetMsgProc(int nCode, WPARAM wParam, LPARAM lParam)
 
 
 void SetWndHooksEnabled(bool enabled) {
+	if (!mainThreadId) {
+		DetectMainThread();
+	}
 	if (enabled) {
 		if (!messagesHook) {
-			messagesHook = SetWindowsHookEx(WH_GETMESSAGE, HookGetMsgProc, module, NULL);
-			Log("Message hook set: ", messagesHook);
+			messagesHook = SetWindowsHookEx(WH_GETMESSAGE, HookGetMsgProc, module, mainThreadId);
+			Log("Message hook set for thread ", mainThreadId);
 		}
 
 		if (!shellHook) {
-			shellHook = SetWindowsHookEx(WH_SHELL, HookShellProc, module, NULL);
+			shellHook = SetWindowsHookEx(WH_SHELL, HookShellProc, module, mainThreadId);
 			if (shellHook == NULL) {
 				Log("Failed to set shell hook", GetLastError());
 			}
-			Log("Shell hook set: ", shellHook);
+			Log("Shell hook set for thread ", mainThreadId);
 		}
-
 	}
 	else {
 		if (messagesHook) {
