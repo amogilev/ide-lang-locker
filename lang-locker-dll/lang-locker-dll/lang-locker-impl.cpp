@@ -231,7 +231,7 @@ LRESULT WINAPI HookShellProc(int nCode, WPARAM wParam, LPARAM lParam)
 	if (revertLanguageRequired && lockedLanguageHandle && nCode == HSHELL_WINDOWACTIVATED) {
 		// seems safe to change the language at this event
 		revertLanguageRequired = false;
-		Log("HookShellProc: change the input language to ", lockedLanguageHandle);
+		Log("HookShellProc: revert the input language to ", lockedLanguageHandle);
 		SetInputLanguage(lockedLanguageHandle);
 	}
 
@@ -286,7 +286,7 @@ LRESULT WINAPI HookGetMsgProc(int nCode, WPARAM wParam, LPARAM lParam)
 		// if some message will be causing errors, they need to be added to list above
 		if (revertLanguageRequired) {
 			revertLanguageRequired = false;
-			// logfile << "HookGetMsgProc(): " << "Attempt for change input language in msg " << findMessageName(pmsg->message) << std::endl;
+			Log("HookGetMsgProc: revert the input language to ", lockedLanguageHandle);
 			SetInputLanguage(lockedLanguageHandle);
 		}
 	}
