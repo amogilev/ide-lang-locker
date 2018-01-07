@@ -52,6 +52,8 @@ extern std::ofstream logfile;
 extern HKL lockedLanguageHandle;
 extern HMODULE module;
 extern DWORD mainThreadId;
+extern DWORD uiThreadId;
+extern bool revertLanguageRequired;
 
 // 
 // Implementation methods which enables or disables messages hooks 

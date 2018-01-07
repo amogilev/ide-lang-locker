@@ -36,11 +36,16 @@ void Log(const char* str, DWORD param) {}
 #endif
 
 LANGLOCKERDLL_API HKL LockInputLanguage(HKL langHandle) {
+	if (!uiThreadId) {
+		uiThreadId = GetCurrentThreadId();
+		Log("UI thread detected: ", uiThreadId);
+	}
 	if (!mainThreadId) {
 		DetectMainThread();
 	}
 
 	HKL curLang = GetKeyboardLayout(mainThreadId);
+
 	Log("LockInputLanguage(), curLang=", curLang);
 	bool success = false;
 
@@ -60,10 +65,49 @@ LANGLOCKERDLL_API HKL LockInputLanguage(HKL langHandle) {
 		lockedLanguageHandle = langHandle;
 		SetWndHooksEnabled(true);
 
-		Log("Input language locked to ", lockedLanguageHandle);
+		if (langHandle == curLang && mainThreadId != uiThreadId) {
+			// already was at the needed language. Unfortunately, in IDEA & Win10 it causes the problem - the next manual switch is reported 
+			//  to neither MsgProc nor ShellProc, so it is not detected, not prevented and not reverted. Thus it causes the following bug:
+			//  - get a system with two languages installed (e.g. English and Russian)
+			//  - unlock language (or start IDEA with no lock)
+			//  - switch language
+			//  - lock language
+			//  - then try to switch languages again several times. In most cases, the system allows one switch to "incorrect" language and 
+			//     one switch back to "correct" one, and only then the "correct" language is actually "locked".
 
-		// activate the language again to protect from the potential concurrency issues
-		SetInputLanguage(langHandle);
+			//  There is no such problem for Eclipse, probably because its UI thread (EventQueue) is the same as main window thread, i.e. "mainThreadId == uiThreadId"
+			//  For IDEA, these threads are different, the manual switches changes language (as per GetKeyboardLayout(threadId)) for the UI thread but not 
+			//  for the main thread, so Windows (under some additional conditions that are not quite clear yet) "skips" these events to hooks (which are in main 
+			//  thread) as if its langauge is not changed .
+
+			// I have found two possible solutions:
+			// 1) (BAD!) Set hooks from the very start of the DLL and keep them until unloaded; that helps for all locks except the first one.
+			// 2) (GOOD! paradoxical but working!) During a lock from UI thread, set ANOTHER language and rely on hooks to change it to the requested one.
+			// The solution (2) is implemented below
+
+			HKL langs[2]; // we need only 2 different languages
+			int langsCount = GetKeyboardLayoutList(2, langs);
+
+			// pre-switch to another language to avoid missing HSHELL_LANGUAGE on further switches
+			HKL otherLang = 0;
+			for (int i = 0; i < langsCount; i++) {
+				if (langHandle != langs[i]) {
+					otherLang = langs[i];
+					break;
+				}
+			}
+			if (otherLang) { // may be missing if only 1 langauge is currently installed!
+				Log("Temporary switch to another language! ", otherLang);
+				ActivateKeyboardLayout(otherLang, KLF_ACTIVATE | KLF_SUBSTITUTE_OK | KLF_SETFORPROCESS);
+				revertLanguageRequired = true; // not actually required, but may be useful for faster switching to the correct language
+			}
+		}
+		else if (langHandle == curLang && mainThreadId == uiThreadId) {
+			// not sure why, but Eclipse require repeated setting of input language
+			SetInputLanguage(langHandle);
+		}
+
+		Log("Input language locked to ", lockedLanguageHandle);
 
 		// NOTE: if the windows is not active, SetInputLanguge() is actually ignored by Windows, with a fake "success" result.
 		// So, we cannot rely only on the code above, but also needs a way to catch WM_ACTIVATE and check the current language there
