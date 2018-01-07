@@ -6,6 +6,10 @@
 #include "lang-locker.h"
 #include "msgnames.h"
 
+#include <vector>
+#include <map>
+#include <algorithm>
+
 // Determines the current locking state
 HKL lockedLanguageHandle = 0;
 
@@ -19,11 +23,68 @@ HHOOK shellHook = 0;
 // this ID is set at the first caught message; until that, value of '0' means 'current thread'
 DWORD mainThreadId = 0;
 
+// UI thread is usually "EventQueue" thread, from which the lock/unlock commands are received
+DWORD uiThreadId = 0;
+
+void printThreadsLangs() {
+	Log("  lang in main thread=", GetKeyboardLayout(mainThreadId));
+	Log("  lang in UI thread=", GetKeyboardLayout(uiThreadId));
+
+	typedef std::multimap<int, int> TLMap;
+	TLMap threadsByLang;
+
+	DWORD procId = GetCurrentProcessId();
+	DWORD foundThreadId = NULL;
+	HANDLE hThreadSnap = INVALID_HANDLE_VALUE;
+	THREADENTRY32 te32;
+	te32.dwSize = sizeof(THREADENTRY32);
+
+	hThreadSnap = CreateToolhelp32Snapshot(TH32CS_SNAPTHREAD, 0);
+	if (hThreadSnap == INVALID_HANDLE_VALUE)
+	{
+		Log("CreateToolhelp32Snapshot failed");
+		return;
+	}
+
+	if (!Thread32First(hThreadSnap, &te32))
+	{
+		Log("Thread32First Failed");
+		CloseHandle(hThreadSnap);
+		return;
+	}
+
+	// walk the thread list, for each thread of this process, check if it has any windows
+	do
+	{
+		if (te32.th32OwnerProcessID == procId)
+		{
+			int tid = te32.th32ThreadID;
+			int lang = (int)GetKeyboardLayout(tid);
+			threadsByLang.insert(std::pair<int, int>(lang, tid));
+		}
+	} while (Thread32Next(hThreadSnap, &te32));
+	CloseHandle(hThreadSnap);
+
+	for (TLMap::iterator it = threadsByLang.begin(); it != threadsByLang.end(); it = threadsByLang.upper_bound(it->first)) {
+		auto threadsRange = threadsByLang.equal_range(it->first);
+		logfile << "Threads with lang=0x" << std::hex << std::uppercase << it->first << ": ";
+		for (auto rIt = threadsRange.first; rIt != threadsRange.second; rIt++)
+		{
+			logfile << "0x" << std::hex << std::uppercase << rIt->second << "  ";
+		}
+		logfile << std::endl;
+	}
+}
+
 // activates the specified language if it is avalable.
 // returns whether activation succeeded
 bool SetInputLanguage(HKL languageHandle) {
+	Log("Before ActivateKeyboardLayout in ", GetCurrentThreadId());
+	printThreadsLangs();
 	HKL result = ActivateKeyboardLayout(languageHandle, KLF_ACTIVATE | KLF_SUBSTITUTE_OK | KLF_SETFORPROCESS);
 	Log("SetInputLanguage() to ", languageHandle);
+	Log("After ActivateKeyboardLayout in ", GetCurrentThreadId());
+	printThreadsLangs();
 
 	return result != 0;
 }
@@ -150,8 +211,20 @@ LRESULT WINAPI HookShellProc(int nCode, WPARAM wParam, LPARAM lParam)
 	switch (nCode) {
 	case HSHELL_WINDOWACTIVATED:
 	case HSHELL_LANGUAGE:
+		if (nCode == HSHELL_WINDOWACTIVATED) {
+			Log("HookShellProc (HSHELL_WINDOWACTIVATED)");
+		}
+		else {
+			Log("HookShellProc (HSHELL_LANGUAGE)");
+			logfile << "HSHELL_LANGUAGE: winHandle=0x" << std::hex << std::uppercase << wParam << ", lang=" << lParam << std::endl;
+			if (wParam) {
+				DWORD procId; 
+				Log("Thread for wnd: ", GetWindowThreadProcessId((HWND)wParam, &procId));
+			}
+//			printThreadsLangs();
+		}
 		if (!revertLanguageRequired && lockedLanguageHandle && GetKeyboardLayout(mainThreadId) != lockedLanguageHandle) {
-			Log("HookShellProc: Detected a need to change the input language");
+			Log("HookShellProc (): Detected a need to change the input language");
 			revertLanguageRequired = true;
 		}
 	}
@@ -185,6 +258,7 @@ LRESULT WINAPI HookGetMsgProc(int nCode, WPARAM wParam, LPARAM lParam)
 	// used for blocking switches. But, it does not work anymore, and left only as a 
 	// reference
 	case WM_INPUTLANGCHANGEREQUEST:
+		Log("WM_INPUTLANGCHANGEREQUEST");
 		if (!revertLanguageRequired) {
 			Log("HookGetMsgProc: Input Language switch blocked in WM_INPUTLANGCHANGEREQUEST");
 			pmsg->message = WM_NULL;

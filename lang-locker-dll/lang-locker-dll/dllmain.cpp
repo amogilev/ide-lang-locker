@@ -17,6 +17,10 @@ void onAttach(bool isProc, HMODULE hModule) {
 		nAttachedProcs++;
 		Log("PROCESS_ATTACH, threadId=", GetCurrentThreadId());
 
+		if (!mainThreadId) {
+			DetectMainThread();
+		}
+
 		/*
 		// uncomment for logging module and process names
 		char modName[1000];

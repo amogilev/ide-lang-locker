@@ -36,6 +36,10 @@ void Log(const char* str, DWORD param) {}
 #endif
 
 LANGLOCKERDLL_API HKL LockInputLanguage(HKL langHandle) {
+	if (!uiThreadId) {
+		uiThreadId = GetCurrentThreadId();
+		Log("UI thread detected: ", uiThreadId);
+	}
 	if (!mainThreadId) {
 		DetectMainThread();
 	}
