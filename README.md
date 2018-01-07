@@ -11,7 +11,7 @@ Build instructions
 ===============
 
 I. At first, lang-locker.dll needs to be built. Do the following actions:
-- Download and install "Microsoft Visual Studio Express 2013 for Windows Desktop" if needed;
+- Download and install "Visual Studio Community 2017" (Desktop development for C++) if needed;
 - Download and install JDK if needed;
 - Set %JAVA_HOME% environment variable to point the JDK installation folder;
 - Run Visual Studio and load lang-locker-dll solution;
@@ -19,8 +19,8 @@ I. At first, lang-locker.dll needs to be built. Do the following actions:
   you may prefer to use standalone Runtime DLLs to make lang-locker.dll smaller - this is fine
   on developer computer but may not work on others without additional installation of vcredist);
 - Build the DLL for both Win32 and x64 platforms;
-- Copy the resulting DLLs from lang-locker-dll\Win32\${Configuration}\ to eclipse-plugin\libs\win32\
-  and from lang-locker-dll\x64\${Configuration}\ to eclipse-plugin\libs\x64\
+- Copy the resulting DLLs from lang-locker-dll\Win32\${Configuration}\ to eclipse-plugin\libs\win32\ and
+  to idea-plugin\src\main\resources\libs\win32\; same for lang-locker-dll\x64\${Configuration}\ and {...}\libs\x64\
 
 II. Build Eclipse plugin.
 - Download and install Eclipse with PDE if you don't have one;
@@ -36,7 +36,8 @@ III. Build plugin for Intellij IDEs (e.g. IDEA).
 - As the run configurations may be overwritten, restore them from VCS: from idea-plugin folder, run 'git checkout -- .idea/runConfigurations'
 - Make sure that the DLLs built in (I) are copied to src\main\resources\libs\{win32,x64} folders;
 - Build and test the plugin using 'buildPlugin' and 'runIdea' run configurations;
-- After a successful build, a plugin ZIP may be found in the "build\distributions" folder
+- After a successful build, a plugin ZIP may be found in the "build\distributions" folder. It may be installed into IDE using 
+  'from disk' installation
 
 ===============
 How to use Eclipse plugin
