@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <feature
       id="com.gilecode.langlocker"
-      label="langlocker-feature"
-      version="2.1.0.qualifier"
+      label="Input Language Locker"
+      version="2.3.0.qualifier"
       os="win32"
       arch="x86,x86_64">
 
@@ -13,13 +13,13 @@ In order to lock the current input language, run the &apos;Lock/unlock input lan
    </description>
 
    <copyright>
-      Copyright (c) 2011, 2016 Andrey Mogilev
-
+      Copyright (c) 2011-2018 Andrey Mogilev
 LangLocker is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation, either version 2 of the License, or
+it under the terms of the GNU General Public License as published
+by
+the Free Software Foundation, either version 2 of the License,
+or
 (at your option) any later version.
-
 LangLocker is distributed in the hope that it will be useful,
 but WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
